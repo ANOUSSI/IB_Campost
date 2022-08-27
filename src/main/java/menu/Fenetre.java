@@ -146,11 +146,10 @@ public class Fenetre {
             // verification que les trois dossier contienet tous les fichiers
             if (dossier_photo != null && dossier_destination != null && dossier_signatures != null) {
                 // cette methode retourne les fichier dont le prefixe est la lettre P
-                File[] photos = dossier_photo.listFiles(file -> file.getName().startsWith("P"));
-        
+                File[] photos = dossier_photo.listFiles(file -> file.getName().toUpperCase().startsWith("P"));
                 // cette methode retourne les fichier dont le prefixe est la lettre S
                 File[] signatures = dossier_signatures.listFiles(file -> {
-                    return file.getName().startsWith("S");
+                    return file.getName().toUpperCase().startsWith("S");
                 });
 
                 comparaison( photos, signatures);
