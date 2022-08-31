@@ -23,6 +23,7 @@ public class Fenetre {
     private File dossier_signatures;
     private JProgressBar progressBar;
     private JTextArea annomaliText;
+    JScrollPane scrollPane;
 
     /**
      * @wbp.parser.entryPoint
@@ -174,14 +175,23 @@ public class Fenetre {
         });
         panel_1.add(btnValider);
         progressBar = new JProgressBar(0, 100);
-        progressBar.setBounds(94, 275, 516, 25);
+        progressBar.setForeground(Color.GREEN);
+        progressBar.setBackground(Color.ORANGE);
+        progressBar.setStringPainted(true);
+        progressBar.setBounds(74, 159, 516, 25);
         panel_1.add(progressBar);
         
         annomaliText = new JTextArea();
         annomaliText.setEditable(false);
         annomaliText.setForeground(Color.RED);
-        annomaliText.setBounds(26, 159, 618, 105);
+        annomaliText.setBounds(38, 195, 644, 105);
         panel_1.add(annomaliText);
+        
+         scrollPane = new JScrollPane(annomaliText,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+         scrollPane.setEnabled(true);
+         scrollPane.setToolTipText("");
+        scrollPane.setBounds(26, 195, 656, 105);
+        panel_1.add(scrollPane);
     }
 
     private void comparaison(File[] photos, File[] signatures) {
@@ -214,6 +224,8 @@ public class Fenetre {
                 });
                 if (!match.get()) {
                     printAnnomalie(annomalis, "Aucune correspondance pour  " + photo.getPath());
+                 File dossier_erreur= new File("C:\\Users\\ANOUSSI\\Desktop\\destination Test\\DossierErreur");
+                 dossier_erreur.mkdir();
 
                 }
 
@@ -230,7 +242,8 @@ public class Fenetre {
 
     private int updateProgressBar(int i) {
         progressBar.setValue(++i);
-        progressBar.setString(i + " photos traitÃ©e(s)");
+        progressBar.setString(i + " photos traitée(s)");
+        
         return i;
     }
 }
