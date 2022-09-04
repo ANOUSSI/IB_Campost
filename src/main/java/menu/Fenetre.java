@@ -9,6 +9,8 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -16,14 +18,17 @@ import static javax.imageio.ImageIO.read;
 
 public class Fenetre {
 
-    public static final String RESULT_FILE_NAME = "result.txt";
+    public static final String RESULT_FILE_NAME = "FUSIONS.txt";
     public static File dossier_destination;
     private JFrame frame;
     private File dossier_photo;
     private File dossier_signatures;
     private JProgressBar progressBar;
     private JTextArea annomaliText;
-    JScrollPane scrollPane;
+
+    private JScrollPane scrollPane;
+    private File dossier_erreur;
+
 
     /**
      * @wbp.parser.entryPoint
@@ -48,14 +53,16 @@ public class Fenetre {
         BufferedImage signatureImage = read(signaturefile);
         int combinedWidth = Math.max(photoImage.getWidth(), signatureImage.getWidth());
         int combinedHeight = photoImage.getHeight() + signatureImage.getHeight();
-        BufferedImage combinedImage = new BufferedImage(combinedWidth, combinedHeight, BufferedImage.TYPE_INT_ARGB);
+        //BufferedImage combinedImage = new BufferedImage(combinedWidth, combinedHeight, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage combinedImage = new BufferedImage(414, 585, BufferedImage.TYPE_INT_ARGB);
         Graphics g = combinedImage.getGraphics();
 
         g.drawImage(photoImage, 0, 0, null);
         g.drawImage(signatureImage, 0, photoImage.getHeight(), null);
         g.dispose();
 
-        String pin = photofile.getName().substring(6, 12);
+//combinedImage.getScaledInstance(70,116,Image.SCALE_DEFAULT);
+        String pin = photofile.getName().substring(3, 9);
         ImageIO.write(combinedImage, "png", new File(dossier_destination, pin + ".jpeg"));
         writeInFile(pin);
 
@@ -119,9 +126,9 @@ public class Fenetre {
         panel_1.add(Button_photo);
         panel_1.add(labelphoto);
         JButton Button_signature = new JButton("Selectionnez le Dossier Signature");
-        Button_signature.setBounds(26, 53, 238, 23);
+        Button_signature.setBounds(26, 62, 238, 23);
         final JLabel label_signature = new JLabel("");
-        label_signature.setBounds(274, 53, 336, 23);
+        label_signature.setBounds(274, 62, 336, 23);
         label_signature.setFont(new Font("Serif", Font.ITALIC, 13));
         Button_signature.addActionListener(new ActionListener() {
 
@@ -157,7 +164,9 @@ public class Fenetre {
         panel_1.add(label_destination);
         panel_1.add(Button_dest);
         JButton btnValider = new JButton("VALIDER");
-        btnValider.setBounds(165, 125, 99, 23);
+        btnValider.setForeground(SystemColor.textHighlight);
+        btnValider.setFont(new Font("Times New Roman", Font.ITALIC, 14));
+        btnValider.setBounds(167, 125, 97, 23);
         btnValider.addActionListener(e -> {
             // verification que les trois dossier contienet tous les fichiers
             if (dossier_photo != null && dossier_destination != null && dossier_signatures != null) {
@@ -180,16 +189,16 @@ public class Fenetre {
         progressBar.setStringPainted(true);
         progressBar.setBounds(74, 159, 516, 25);
         panel_1.add(progressBar);
-        
-        annomaliText = new JTextArea();
+
+        annomaliText = new JTextArea(8, 60);
         annomaliText.setEditable(false);
         annomaliText.setForeground(Color.RED);
         annomaliText.setBounds(38, 195, 644, 105);
         panel_1.add(annomaliText);
-        
-         scrollPane = new JScrollPane(annomaliText,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-         scrollPane.setEnabled(true);
-         scrollPane.setToolTipText("");
+
+        scrollPane = new JScrollPane(annomaliText, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setEnabled(true);
+        scrollPane.setToolTipText("");
         scrollPane.setBounds(26, 195, 656, 105);
         panel_1.add(scrollPane);
     }
@@ -200,7 +209,18 @@ public class Fenetre {
         progressBar.setValue(0);
         progressBar.setStringPainted(true);
         final StringBuilder annomalis = new StringBuilder("");
+
         Runnable runnable = () -> {
+            dossier_erreur = new File("C:\\Users\\ANOUSSI\\Desktop\\CAMPOST\\ERREURS");
+            if (!dossier_erreur.exists()) {
+                try {
+                    dossier_erreur = Files.createDirectory(Path.of("C:\\Users\\ANOUSSI\\Desktop\\CAMPOST\\ERREURS")).toFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
             int i = 0;
 
             for (File photo : photos) {
@@ -210,28 +230,27 @@ public class Fenetre {
                 Arrays.asList(signatures).forEach(signature -> {
 
                     try {
-                        if (photo.getName().substring(1, 12).equalsIgnoreCase(signature.getName().substring(1, 12))) {
+                        if (photo.getName().substring(3, 9).equalsIgnoreCase(signature.getName().substring(3, 9))) {
                             match.set(true);
 
                             combineImage(photo, signature);
-
                         }
-
                     } catch (Exception e) {
                         printAnnomalie(annomalis, e.getMessage());
                     }
-
                 });
                 if (!match.get()) {
-                    printAnnomalie(annomalis, "Aucune correspondance pour  " + photo.getPath());
-                 File dossier_erreur= new File("C:\\Users\\ANOUSSI\\Desktop\\destination Test\\DossierErreur");
-                 dossier_erreur.mkdir();
+                    printAnnomalie(annomalis, "  No match for  " + photo.getPath());
+                    try {
+                        Files.copy(photo.toPath(), dossier_erreur.toPath().resolve(photo.getName()));
 
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-
-
             }
         };
+
         new Thread(runnable).start();
     }
 
@@ -242,8 +261,8 @@ public class Fenetre {
 
     private int updateProgressBar(int i) {
         progressBar.setValue(++i);
-        progressBar.setString(i + " photos traitée(s)");
-        
+        progressBar.setString(i + " PHOTOS TRAITEE(S)");
+
         return i;
     }
 }
